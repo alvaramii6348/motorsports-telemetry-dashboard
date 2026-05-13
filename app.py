@@ -25,21 +25,21 @@ if uploaded_file is not None:
     st.info(f"Detected CSV type: {csv_type}")
 
     if csv_type == "race_summary":
-    st.subheader("Race Summary Mode")
+        st.subheader("Race Summary Mode")
 
-    st.subheader("Lap Time Progression")
-    fig = plot_lap_times(df)
-    st.plotly_chart(fig, use_container_width=True)
+        st.subheader("Lap Time Progression")
+        fig = plot_lap_times(df)
+        st.plotly_chart(fig, use_container_width=True)
 
-    lap_summary = get_lap_summary(df)
-    st.dataframe(lap_summary)
+        lap_summary = get_lap_summary(df)
+        st.dataframe(lap_summary)
 
-    fastest_lap = get_fastest_lap(df)
+        fastest_lap = get_fastest_lap(df)
 
-    st.metric(
-        label="Fastest Lap",
-        value=f"Lap {int(fastest_lap['Lap'])}",
-        delta=f"{fastest_lap['Lap time']:.3f} sec"
+        st.metric(
+            label="Fastest Lap",
+            value=f"Lap {int(fastest_lap['Lap'])}",
+            delta=f"{fastest_lap['Lap time']:.3f} sec"
     )
 
     st.subheader("Data Preview")
