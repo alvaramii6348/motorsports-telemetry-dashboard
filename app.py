@@ -1,7 +1,10 @@
 import streamlit as st
 
 from src.data_loader import load_telemetry_csv
-from src.preprocessing import clean_column_names, get_available_laps
+from src.preprocessing import clean_column_names, get_available_laps, detect_csv_type
+from src.lap_analysis import get_fastest_lap, get_lap_summary
+from src.plotting import plot_lap_times
+
 
 
 st.set_page_config(
@@ -18,6 +21,27 @@ if uploaded_file is not None:
     df = load_telemetry_csv(uploaded_file)
     df = clean_column_names(df)
 
+    csv_type = detect_csv_type(df)
+    st.info(f"Detected CSV type: {csv_type}")
+
+    if csv_type == "race_summary":
+    st.subheader("Race Summary Mode")
+
+    st.subheader("Lap Time Progression")
+    fig = plot_lap_times(df)
+    st.plotly_chart(fig, use_container_width=True)
+
+    lap_summary = get_lap_summary(df)
+    st.dataframe(lap_summary)
+
+    fastest_lap = get_fastest_lap(df)
+
+    st.metric(
+        label="Fastest Lap",
+        value=f"Lap {int(fastest_lap['Lap'])}",
+        delta=f"{fastest_lap['Lap time']:.3f} sec"
+    )
+
     st.subheader("Data Preview")
     st.dataframe(df.head()) #first few rows
 
@@ -25,6 +49,8 @@ if uploaded_file is not None:
     st.write(df.columns.tolist())
 
     laps = get_available_laps(df)
+
+    
 
     if len(laps) == 0:
         st.warning("No 'Lap' column found. Check your CSV column names.")
