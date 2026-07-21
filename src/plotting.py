@@ -43,3 +43,28 @@ def plot_sector_differences(comparison_df):
     )
 
     return fig
+
+
+def plot_single_channel(
+    df: pd.DataFrame,
+    x_column: str,
+    y_column: str,
+    title: str
+):
+    """
+    Create a line chart for one telemetry channel.
+    """
+    fig = px.line(
+        df,
+        x=x_column,
+        y=y_column,
+        title=title
+    )
+
+    fig.update_layout(
+        xaxis_title=x_column,
+        yaxis_title=y_column,
+        height=400
+    )
+
+    return fig
