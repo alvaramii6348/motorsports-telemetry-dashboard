@@ -2,7 +2,7 @@ import streamlit as st
 
 from src.data_loader import load_telemetry_csv
 from src.preprocessing import clean_column_names, get_available_laps, detect_csv_type
-from src.lap_analysis import get_fastest_lap, get_lap_summary, get_valid_laps
+from src.lap_analysis import get_fastest_lap, get_lap_summary, get_valid_laps, compare_laps
 from src.plotting import plot_lap_times
 
 
@@ -28,6 +28,11 @@ if uploaded_file is not None:
 
         valid_laps = get_valid_laps(df)
 
+        only_clean = st.checkbox("Only show clean laps", value=False)
+
+        if only_clean and "Clean" in valid_laps.columns:
+            valid_laps = valid_laps[valid_laps["Clean"] == 1]
+
         st.subheader("Lap Time Progression")
         fig = plot_lap_times(valid_laps)
         st.plotly_chart(fig, use_container_width=True)
@@ -50,22 +55,32 @@ if uploaded_file is not None:
     st.subheader("Columns")
     st.write(df.columns.tolist())
 
-    laps = get_available_laps(df)
+    if csv_type == "race_summary":
+        laps = get_available_laps(valid_laps)
+    else:
+        laps = get_available_laps(df)
 
     if len(laps) == 0:
-        st.warning("No 'Lap' column found. Check your CSV column names.")
+        st.warning("No valid laps found. Check your CSV column names or filtering logic.")
     else:
         st.subheader("Lap Selection")
 
         col1, col2 = st.columns(2)
 
         with col1:
-            lap_a = st.selectbox("Select Lap A", laps)
+            lap_a = st.selectbox("Select Lap A", laps, index=0)
 
         with col2:
-            lap_b = st.selectbox("Select Lap B", laps)
+            default_lap_b_index = 1 if len(laps) > 1 else 0
+            lap_b = st.selectbox("Select Lap B", laps, index=default_lap_b_index)
 
         st.success(f"Comparing Lap {lap_a} vs Lap {lap_b}")
+
+        if csv_type == "race_summary":
+            st.subheader("Lap Comparison")
+
+            comparison_df = compare_laps(valid_laps, lap_a, lap_b)
+            st.dataframe(comparison_df, hide_index=True)
 
 else:
     st.info("Upload a CSV file to begin.")

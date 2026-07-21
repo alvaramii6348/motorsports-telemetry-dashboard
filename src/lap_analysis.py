@@ -59,3 +59,30 @@ def get_lap_summary(df: pd.DataFrame) -> pd.DataFrame:
     available_columns = [col for col in columns if col in df.columns]
 
     return df[available_columns].copy()
+
+def compare_laps(df: pd.DataFrame, lap_a: int, lap_b: int) -> pd.DataFrame:
+    """
+    Compare two laps using lap time and sector times.
+    """
+    lap_a_data = df[df["Lap"] == lap_a].iloc[0]
+    lap_b_data = df[df["Lap"] == lap_b].iloc[0]
+
+    comparison_rows = []
+
+    columns_to_compare = ["Lap time", "Sector 1", "Sector 2", "Sector 3", "Sector 4"]
+
+    for col in columns_to_compare:
+        if col in df.columns:
+            value_a = lap_a_data[col]
+            value_b = lap_b_data[col]
+            difference = value_a - value_b
+
+            comparison_rows.append({
+                "Metric": col,
+                f"Lap {lap_a}": value_a,
+                f"Lap {lap_b}": value_b,
+                "Difference": difference,
+                "Faster Lap": lap_a if value_a < value_b else lap_b
+            })
+
+    return pd.DataFrame(comparison_rows)
