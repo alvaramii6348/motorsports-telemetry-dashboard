@@ -86,3 +86,30 @@ def compare_laps(df: pd.DataFrame, lap_a: int, lap_b: int) -> pd.DataFrame:
             })
 
     return pd.DataFrame(comparison_rows)
+
+def get_race_stats(df: pd.DataFrame) -> dict:
+    """
+    Calculate summary statistics for valid race laps.
+    """
+    stats = {
+        "valid_laps": len(df),
+        "fastest_lap_time": df["Lap time"].min(),
+        "average_lap_time": df["Lap time"].mean(),
+        "lap_time_std": df["Lap time"].std(),
+    }
+
+    fastest_lap_row = df.loc[df["Lap time"].idxmin()]
+    stats["fastest_lap_number"] = int(fastest_lap_row["Lap"])
+
+    if "Clean" in df.columns:
+        clean_laps = df[df["Clean"] == 1]
+
+        if len(clean_laps) > 0:
+            best_clean_row = clean_laps.loc[clean_laps["Lap time"].idxmin()]
+            stats["best_clean_lap_number"] = int(best_clean_row["Lap"])
+            stats["best_clean_lap_time"] = best_clean_row["Lap time"]
+        else:
+            stats["best_clean_lap_number"] = None
+            stats["best_clean_lap_time"] = None
+
+    return stats
