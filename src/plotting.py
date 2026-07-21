@@ -21,3 +21,25 @@ def plot_lap_times(df: pd.DataFrame):
     )
 
     return fig
+
+
+def plot_sector_differences(comparison_df):
+    """
+    Plot sector/lap time differences between two selected laps.
+    """
+    sector_rows = comparison_df[comparison_df["Metric"].str.startswith("Sector")]
+
+    fig = px.bar(
+        sector_rows,
+        x="Metric",
+        y="Difference",
+        title="Sector Time Difference"
+    )
+
+    fig.update_layout(
+        xaxis_title="Sector",
+        yaxis_title="Difference in Seconds",
+        height=400
+    )
+
+    return fig

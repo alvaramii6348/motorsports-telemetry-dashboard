@@ -3,7 +3,8 @@ import streamlit as st
 from src.data_loader import load_telemetry_csv
 from src.preprocessing import clean_column_names, get_available_laps, detect_csv_type
 from src.lap_analysis import get_fastest_lap, get_lap_summary, get_valid_laps, compare_laps
-from src.plotting import plot_lap_times
+from src.plotting import plot_lap_times, plot_sector_differences
+
 
 
 st.set_page_config(
@@ -80,7 +81,14 @@ if uploaded_file is not None:
             st.subheader("Lap Comparison")
 
             comparison_df = compare_laps(valid_laps, lap_a, lap_b)
-            st.dataframe(comparison_df, hide_index=True)
+
+            if comparison_df.empty:
+                st.warning("Could not compare these laps.")
+            else:
+                st.dataframe(comparison_df, hide_index=True)
+
+                fig = plot_sector_differences(comparison_df)
+                st.plotly_chart(fig, use_container_width=True)
 
 else:
     st.info("Upload a CSV file to begin.")
