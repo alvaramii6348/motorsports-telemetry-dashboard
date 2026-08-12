@@ -16,7 +16,8 @@ from src.lap_analysis import (
 from src.plotting import (
     plot_lap_times,
     plot_sector_differences,
-    plot_single_channel
+    plot_single_channel,
+    plot_channel_comparison
 )
 
 
@@ -190,10 +191,108 @@ if uploaded_file is not None:
         # dashboard-friendly units
         telemetry_df = prepare_telemetry_data(df)
 
+        st.subheader("Core Telemetry")
+
+        speed_fig = plot_single_channel(
+            telemetry_df,
+            x_column="Lap Distance (%)",
+            y_column="Speed (mph)",
+            title="Speed"
+        )
+
+        st.plotly_chart(
+            speed_fig,
+            use_container_width=True
+        )
+
+        brake_fig = plot_single_channel(
+            telemetry_df,
+            x_column="Lap Distance (%)",
+            y_column="Brake (%)",
+            title="Brake"
+        )
+
+        st.plotly_chart(
+            brake_fig,
+            use_container_width=True
+        )
+
+        throttle_fig = plot_single_channel(
+            telemetry_df,
+            x_column="Lap Distance (%)",
+            y_column="Throttle (%)",
+            title="Throttle"
+        )
+
+        st.plotly_chart(
+            throttle_fig,
+            use_container_width=True
+        )
+
+        st.subheader("Compare Telemetry Laps")
+
+        comparison_file = st.file_uploader(
+            "Upload a second telemetry lap",
+            type=["csv"],
+            key="telemetry_comparison"
+        )
+
+        if comparison_file is not None:
+
+            comparison_df = load_telemetry_csv(comparison_file)
+            comparison_df = clean_column_names(comparison_df)
+
+            comparison_type = detect_csv_type(comparison_df)
+
+            if comparison_type != "telemetry":
+                st.warning(
+                    "The comparison file is not a supported Garage61 telemetry CSV."
+                )
+
+            else:
+                comparison_telemetry_df = prepare_telemetry_data(
+                    comparison_df
+                )
+                speed_comparison_fig = plot_channel_comparison(
+                    telemetry_df,
+                    comparison_telemetry_df,
+                    x_column="Lap Distance (%)",
+                    y_column="Speed (mph)",
+                    title="Speed Comparison"
+                )
+
+                st.plotly_chart(
+                    speed_comparison_fig,
+                    use_container_width=True
+                )
+
+                brake_comparison_fig = plot_channel_comparison(
+                    telemetry_df,
+                    comparison_telemetry_df,
+                    x_column="Lap Distance (%)",
+                    y_column="Brake (%)",
+                    title="Brake Comparison"
+                )
+
+                st.plotly_chart(
+                    brake_comparison_fig,
+                    use_container_width=True
+                )
+
+                throttle_comparison_fig = plot_channel_comparison(
+                    telemetry_df,
+                    comparison_telemetry_df,
+                    x_column="Lap Distance (%)",
+                    y_column="Throttle (%)",
+                    title="Throttle Comparison"
+                )
+
+                st.plotly_chart(
+                    throttle_comparison_fig,
+                    use_container_width=True
+                )
+
         telemetry_channels = {
-            "Speed": "Speed (mph)",
-            "Throttle": "Throttle (%)",
-            "Brake": "Brake (%)",
             "RPM": "RPM",
             "Gear": "Gear",
             "Steering Wheel Angle": "Steering Angle (deg)"
@@ -210,10 +309,12 @@ if uploaded_file is not None:
             st.warning(
                 "No supported telemetry channels were found."
             )
-
         else:
+
+            st.subheader("Additional Telemetry")
+
             selected_channel = st.selectbox(
-                "Select telemetry channel",
+                "Select Channel",
                 list(available_channels.keys())
             )
 

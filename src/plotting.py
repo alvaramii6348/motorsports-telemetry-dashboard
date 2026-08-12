@@ -20,6 +20,7 @@ def plot_lap_times(df: pd.DataFrame):
         height=450
     )
 
+
     return fig
 
 
@@ -73,6 +74,67 @@ def plot_single_channel(
         xaxis_title=x_column,
         yaxis_title=y_column,
         height=400
+    )
+
+    return fig
+
+def plot_channel_comparison(
+    df_a: pd.DataFrame,
+    df_b: pd.DataFrame,
+    x_column: str,
+    y_column: str,
+    title: str
+):
+    """
+    Overlay the same telemetry channel from two laps.
+    """
+
+    lap_a = df_a.dropna(
+        subset=[x_column, y_column]
+    ).copy()
+
+    lap_b = df_b.dropna(
+        subset=[x_column, y_column]
+    ).copy()
+
+    # Ensure both laps are drawn in lap-distance order
+    lap_a = lap_a.sort_values(by=x_column)
+    lap_b = lap_b.sort_values(by=x_column)
+
+    # Add labels so Plotly knows which line belongs to which lap
+    lap_a["Comparison Lap"] = "Lap A"
+    lap_b["Comparison Lap"] = "Lap B"
+
+    combined_df = pd.concat(
+        [lap_a, lap_b],
+        ignore_index=True
+    )
+
+    fig = px.line(
+        combined_df,
+        x=x_column,
+        y=y_column,
+        color="Comparison Lap",
+        title=title
+    )
+
+    fig.update_layout(
+        yaxis_title=y_column,
+        height=400
+    )
+
+    fig.update_xaxes(
+        range=[0, 100],
+        tickmode="array",
+        tickvals=[0, 25, 50, 75, 100],
+        ticktext=[
+            "Start",
+            "25%",
+            "50%",
+            "75%",
+            "Finish"
+        ],
+        title="Lap Progress"
     )
 
     return fig
