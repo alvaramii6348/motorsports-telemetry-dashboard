@@ -54,8 +54,16 @@ def plot_single_channel(
     """
     Create a line chart for one telemetry channel.
     """
+
+    plot_df = df.dropna(
+        subset=[x_column, y_column]
+    ).copy()
+
+    # Make sure telemetry is plotted in lap-distance order
+    plot_df = plot_df.sort_values(by=x_column)
+
     fig = px.line(
-        df,
+        plot_df,
         x=x_column,
         y=y_column,
         title=title
