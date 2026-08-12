@@ -196,7 +196,7 @@ if uploaded_file is not None:
             "Brake": "Brake (%)",
             "RPM": "RPM",
             "Gear": "Gear",
-            "Steering Angle": "SteeringWheelAngle"
+            "Steering Wheel Angle": "Steering Angle (deg)"
         }
 
         # Only show channels that exist in this CSV

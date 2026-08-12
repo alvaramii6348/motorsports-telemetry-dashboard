@@ -80,4 +80,10 @@ def prepare_telemetry_data(df: pd.DataFrame) -> pd.DataFrame:
         else:
             telemetry_df["Brake (%)"] = telemetry_df["Brake"]
 
+    #steering 
+    if "SteeringWheelAngle" in telemetry_df.columns:
+        telemetry_df["Steering Angle (deg)"] = (
+            telemetry_df["SteeringWheelAngle"] * (180 / 3.141592653589793)
+        )
+
     return telemetry_df
