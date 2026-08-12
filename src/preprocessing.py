@@ -37,3 +37,47 @@ def detect_csv_type(df):
         return "race_summary"
 
     return "unknown"
+
+def prepare_telemetry_data(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Prepare Garage61 telemetry data for dashboard display.
+
+    Creates display-friendly columns for:
+    - lap distance percentage
+    - speed in mph
+    - throttle percentage
+    - brake percentage
+    """
+    telemetry_df = df.copy()
+
+    # Convert lap distance from 0.0-1.0 to 0-100%
+    if "LapDistPct" in telemetry_df.columns:
+        telemetry_df["Lap Distance (%)"] = (
+            telemetry_df["LapDistPct"] * 100
+        )
+
+    # Convert speed from meters/second to miles/hour
+    if "Speed" in telemetry_df.columns:
+        telemetry_df["Speed (mph)"] = (
+            telemetry_df["Speed"] * 2.23694
+        )
+
+    # Garage61 throttle data may be stored from 0.0-1.0
+    if "Throttle" in telemetry_df.columns:
+        if telemetry_df["Throttle"].max() <= 1.01:
+            telemetry_df["Throttle (%)"] = (
+                telemetry_df["Throttle"] * 100
+            )
+        else:
+            telemetry_df["Throttle (%)"] = telemetry_df["Throttle"]
+
+    # Garage61 brake data may be stored from 0.0-1.0
+    if "Brake" in telemetry_df.columns:
+        if telemetry_df["Brake"].max() <= 1.01:
+            telemetry_df["Brake (%)"] = (
+                telemetry_df["Brake"] * 100
+            )
+        else:
+            telemetry_df["Brake (%)"] = telemetry_df["Brake"]
+
+    return telemetry_df

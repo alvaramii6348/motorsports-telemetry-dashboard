@@ -4,7 +4,8 @@ from src.data_loader import load_telemetry_csv
 from src.preprocessing import (
     clean_column_names,
     get_available_laps,
-    detect_csv_type
+    detect_csv_type,
+    prepare_telemetry_data
 )
 from src.lap_analysis import (
     get_lap_summary,
@@ -185,22 +186,25 @@ if uploaded_file is not None:
             "Analyze individual telemetry channels across the lap."
         )
 
-        telemetry_channels = [
-            "Speed",
-            "Throttle",
-            "Brake",
-            "RPM",
-            "Gear",
-            "SteeringWheelAngle"
-        ]
+        # Convert raw Garage61 values into
+        # dashboard-friendly units
+        telemetry_df = prepare_telemetry_data(df)
 
-        # Only show channels that actually
-        # exist in the uploaded CSV
-        available_channels = [
-            channel
-            for channel in telemetry_channels
-            if channel in df.columns
-        ]
+        telemetry_channels = {
+            "Speed": "Speed (mph)",
+            "Throttle": "Throttle (%)",
+            "Brake": "Brake (%)",
+            "RPM": "RPM",
+            "Gear": "Gear",
+            "Steering Angle": "SteeringWheelAngle"
+        }
+
+        # Only show channels that exist in this CSV
+        available_channels = {
+            display_name: column_name
+            for display_name, column_name in telemetry_channels.items()
+            if column_name in telemetry_df.columns
+        }
 
         if len(available_channels) == 0:
             st.warning(
@@ -210,13 +214,15 @@ if uploaded_file is not None:
         else:
             selected_channel = st.selectbox(
                 "Select telemetry channel",
-                available_channels
+                list(available_channels.keys())
             )
 
+            selected_column = available_channels[selected_channel]
+
             fig = plot_single_channel(
-                df,
-                x_column="LapDistPct",
-                y_column=selected_channel,
+                telemetry_df,
+                x_column="Lap Distance (%)",
+                y_column=selected_column,
                 title=f"{selected_channel} Trace"
             )
 
