@@ -50,7 +50,9 @@ def plot_single_channel(
     df: pd.DataFrame,
     x_column: str,
     y_column: str,
-    title: str
+    title: str,
+    y_min=None,
+    y_max=None
 ):
     """
     Create a line chart for one telemetry channel.
@@ -76,6 +78,25 @@ def plot_single_channel(
         height=400
     )
 
+    fig.update_xaxes(
+        range=[0, 100],
+        tickmode="array",
+        tickvals=[0, 25, 50, 75, 100],
+        ticktext=[
+            "Start",
+            "25%",
+            "50%",
+            "75%",
+            "Finish"
+        ],
+        title="Lap Progress"
+    )
+
+    if y_min is not None or y_max is not None:
+        fig.update_yaxes(
+            range=[y_min, y_max]
+        )
+
     return fig
 
 def plot_channel_comparison(
@@ -83,7 +104,9 @@ def plot_channel_comparison(
     df_b: pd.DataFrame,
     x_column: str,
     y_column: str,
-    title: str
+    title: str,
+    y_min=None,
+    y_max=None
 ):
     """
     Overlay the same telemetry channel from two laps.
@@ -120,6 +143,50 @@ def plot_channel_comparison(
 
     fig.update_layout(
         yaxis_title=y_column,
+        height=400
+    )
+
+    fig.update_xaxes(
+        range=[0, 100],
+        tickmode="array",
+        tickvals=[0, 25, 50, 75, 100],
+        ticktext=[
+            "Start",
+            "25%",
+            "50%",
+            "75%",
+            "Finish"
+        ],
+        title="Lap Progress"
+    )
+
+    if y_min is not None or y_max is not None:
+        fig.update_yaxes(
+            range=[y_min, y_max]
+        )
+
+    return fig
+
+def plot_speed_delta(delta_df: pd.DataFrame):
+    """
+    Plot speed difference between two telemetry laps.
+    """
+
+    fig = px.line(
+        delta_df,
+        x="Lap Distance (%)",
+        y="Speed Delta (mph)",
+        title="Speed Delta"
+    )
+
+    # Zero represents equal speed
+    fig.add_hline(
+        y=0,
+        line_dash="dash"
+    )
+
+    fig.update_layout(
+        yaxis_title="Speed Difference (mph)",
         height=400
     )
 

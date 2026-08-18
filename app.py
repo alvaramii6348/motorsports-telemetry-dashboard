@@ -17,9 +17,10 @@ from src.plotting import (
     plot_lap_times,
     plot_sector_differences,
     plot_single_channel,
-    plot_channel_comparison
+    plot_channel_comparison,
+    plot_speed_delta
 )
-
+from src.telemetry_analysis import calculate_speed_delta
 
 st.set_page_config(
     page_title="Motorsports Telemetry Dashboard",
@@ -209,7 +210,9 @@ if uploaded_file is not None:
             telemetry_df,
             x_column="Lap Distance (%)",
             y_column="Brake (%)",
-            title="Brake"
+            title="Brake",
+            y_min=0,
+            y_max=100
         )
 
         st.plotly_chart(
@@ -221,7 +224,9 @@ if uploaded_file is not None:
             telemetry_df,
             x_column="Lap Distance (%)",
             y_column="Throttle (%)",
-            title="Throttle"
+            title="Throttle",
+            y_min=0,
+            y_max=100
         )
 
         st.plotly_chart(
@@ -261,17 +266,33 @@ if uploaded_file is not None:
                     title="Speed Comparison"
                 )
 
+                speed_delta_df = calculate_speed_delta(
+                    telemetry_df,
+                    comparison_telemetry_df
+                )
+
+                speed_delta_fig = plot_speed_delta(
+                    speed_delta_df
+                )
+
                 st.plotly_chart(
-                    speed_comparison_fig,
+                    speed_delta_fig,
                     use_container_width=True
                 )
+                st.caption(
+                    "Positive = Lap A faster | Negative = Lap B faster"
+                )
+
+
 
                 brake_comparison_fig = plot_channel_comparison(
                     telemetry_df,
                     comparison_telemetry_df,
                     x_column="Lap Distance (%)",
                     y_column="Brake (%)",
-                    title="Brake Comparison"
+                    title="Brake Comparison",
+                    y_min=0,
+                    y_max=100
                 )
 
                 st.plotly_chart(
@@ -284,7 +305,9 @@ if uploaded_file is not None:
                     comparison_telemetry_df,
                     x_column="Lap Distance (%)",
                     y_column="Throttle (%)",
-                    title="Throttle Comparison"
+                    title="Throttle Comparison",
+                    y_min=0,
+                    y_max=100
                 )
 
                 st.plotly_chart(
