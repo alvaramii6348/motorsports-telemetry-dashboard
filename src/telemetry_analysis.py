@@ -82,3 +82,65 @@ def calculate_speed_delta(
     )
 
     return result
+
+def detect_braking_zones(
+    df: pd.DataFrame,
+    brake_threshold: float = 5.0
+) -> pd.DataFrame:
+    """
+    Detect braking zones based on brake pedal application.
+
+    A braking zone begins when Brake (%) rises above the threshold
+    and ends when it falls back below the threshold.
+    """
+
+    brake_df = df[
+        ["Lap Distance (%)", "Brake (%)"]
+    ].dropna().copy()
+
+    brake_df = brake_df.sort_values("Lap Distance (%)")
+
+    brake_df["Braking"] = (
+        brake_df["Brake (%)"] >= brake_threshold
+    )
+
+    zones = []
+    zone_start = None
+
+    for i in range(len(brake_df)):
+        is_braking = brake_df.iloc[i]["Braking"]
+
+        if is_braking and zone_start is None:
+            zone_start = i
+
+        elif not is_braking and zone_start is not None:
+            zone_end = i - 1
+
+            zone_data = brake_df.iloc[
+                zone_start:zone_end + 1
+            ]
+
+            zones.append({
+                "Start (%)": zone_data["Lap Distance (%)"].iloc[0],
+                "End (%)": zone_data["Lap Distance (%)"].iloc[-1],
+                "Peak Brake (%)": zone_data["Brake (%)"].max()
+            })
+
+            zone_start = None
+
+    zones_df = pd.DataFrame(zones)
+
+    if not zones_df.empty:
+        zones_df.insert(
+            0,
+            "Zone",
+            range(1, len(zones_df) + 1)
+        )
+
+        zones_df = zones_df.round({
+            "Start (%)": 2,
+            "End (%)": 2,
+            "Peak Brake (%)": 1
+        })
+
+    return zones_df

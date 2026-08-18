@@ -20,7 +20,10 @@ from src.plotting import (
     plot_channel_comparison,
     plot_speed_delta
 )
-from src.telemetry_analysis import calculate_speed_delta
+from src.telemetry_analysis import (
+    calculate_speed_delta,
+    detect_braking_zones
+)
 
 st.set_page_config(
     page_title="Motorsports Telemetry Dashboard",
@@ -219,6 +222,20 @@ if uploaded_file is not None:
             brake_fig,
             use_container_width=True
         )
+
+        st.subheader("Braking Zones")
+
+        braking_zones = detect_braking_zones(
+            telemetry_df
+        )
+
+        if braking_zones.empty:
+            st.info("No braking zones detected.")
+        else:
+            st.dataframe(
+                braking_zones,
+                hide_index=True
+            )
 
         throttle_fig = plot_single_channel(
             telemetry_df,
