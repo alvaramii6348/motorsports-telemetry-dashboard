@@ -83,6 +83,62 @@ def calculate_speed_delta(
 
     return result
 
+def merge_nearby_braking_zones(
+    zones_df: pd.DataFrame,
+    max_gap: float = 1.0
+) -> pd.DataFrame:
+    """
+    Merge braking zones separated by a very short gap.
+
+    max_gap is measured as percentage of lap distance.
+    """
+
+    if zones_df.empty:
+        return zones_df
+
+    merged_zones = []
+
+    current_zone = zones_df.iloc[0].copy()
+
+    for i in range(1, len(zones_df)):
+        next_zone = zones_df.iloc[i]
+
+        gap = (
+            next_zone["Start (%)"]
+            - current_zone["End (%)"]
+        )
+
+        if gap <= max_gap:
+            # Extend the current braking zone
+            current_zone["End (%)"] = next_zone["End (%)"]
+
+            # Keep the highest brake pressure from either section
+            current_zone["Peak Brake (%)"] = max(
+                current_zone["Peak Brake (%)"],
+                next_zone["Peak Brake (%)"]
+            )
+
+        else:
+            merged_zones.append(current_zone)
+            current_zone = next_zone.copy()
+
+    # Add the final zone
+    merged_zones.append(current_zone)
+
+    result = pd.DataFrame(merged_zones)
+
+    result.insert(
+    0,
+    "Zone",
+    range(1, len(result) + 1)
+    )
+
+    return result.round({
+        "Start (%)": 2,
+        "End (%)": 2,
+        "Peak Brake (%)": 1
+    })
+
 def detect_braking_zones(
     df: pd.DataFrame,
     brake_threshold: float = 5.0
@@ -130,17 +186,95 @@ def detect_braking_zones(
 
     zones_df = pd.DataFrame(zones)
 
-    if not zones_df.empty:
-        zones_df.insert(
-            0,
-            "Zone",
-            range(1, len(zones_df) + 1)
-        )
+    if zones_df.empty:
+        return zones_df
 
-        zones_df = zones_df.round({
-            "Start (%)": 2,
-            "End (%)": 2,
-            "Peak Brake (%)": 1
-        })
+    # Merge brake applications that are separated
+    # by only a small gap in lap distance
+    zones_df = merge_nearby_braking_zones(
+        zones_df,
+        max_gap=1.0
+    )
 
     return zones_df
+
+
+def compare_braking_zones(
+    df_a: pd.DataFrame,
+    df_b: pd.DataFrame,
+    max_start_difference: float = 3.0
+) -> pd.DataFrame:
+    """
+    Compare braking zones between two telemetry laps.
+
+    Zones are matched based on the closest braking start position.
+
+    Start Delta:
+        positive = Lap B brakes later
+        negative = Lap A brakes later
+    """
+
+    zones_a = detect_braking_zones(df_a)
+    zones_b = detect_braking_zones(df_b)
+
+    if zones_a.empty or zones_b.empty:
+        return pd.DataFrame()
+
+    comparison_rows = []
+
+    # Keep track of Lap B zones that have already been matched
+    available_b_indices = set(zones_b.index)
+
+    for _, zone_a in zones_a.iterrows():
+
+        if not available_b_indices:
+            break
+
+        # Find the Lap B zone whose braking start is closest
+        closest_b_index = min(
+            available_b_indices,
+            key=lambda index: abs(
+                zones_b.loc[index, "Start (%)"]
+                - zone_a["Start (%)"]
+            )
+        )
+
+        zone_b = zones_b.loc[closest_b_index]
+
+        start_delta = (
+            zone_b["Start (%)"]
+            - zone_a["Start (%)"]
+        )
+
+        # Ignore matches that are too far apart on the track
+        if abs(start_delta) > max_start_difference:
+            continue
+
+        comparison_rows.append({
+            "Zone": zone_a["Zone"],
+
+            "Lap A Start (%)": zone_a["Start (%)"],
+            "Lap B Start (%)": zone_b["Start (%)"],
+            "Start Delta (%)": start_delta,
+
+            "Lap A End (%)": zone_a["End (%)"],
+            "Lap B End (%)": zone_b["End (%)"],
+            "End Delta (%)": (
+                zone_b["End (%)"]
+                - zone_a["End (%)"]
+            ),
+
+            "Lap A Peak Brake (%)": zone_a["Peak Brake (%)"],
+            "Lap B Peak Brake (%)": zone_b["Peak Brake (%)"]
+        })
+
+        # Don't allow the same Lap B braking zone
+        # to match multiple Lap A zones
+        available_b_indices.remove(closest_b_index)
+
+    comparison_df = pd.DataFrame(comparison_rows)
+
+    if not comparison_df.empty:
+        comparison_df = comparison_df.round(2)
+
+    return comparison_df

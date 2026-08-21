@@ -22,7 +22,8 @@ from src.plotting import (
 )
 from src.telemetry_analysis import (
     calculate_speed_delta,
-    detect_braking_zones
+    detect_braking_zones,
+    compare_braking_zones
 )
 
 st.set_page_config(
@@ -316,6 +317,28 @@ if uploaded_file is not None:
                     brake_comparison_fig,
                     use_container_width=True
                 )
+
+                st.subheader("Braking Zone Comparison")
+                
+                braking_comparison_df = compare_braking_zones(
+                    telemetry_df,
+                    comparison_telemetry_df
+                )
+
+                if braking_comparison_df.empty:
+                    st.info(
+                        "No matching braking zones were found between the two laps."
+                    )
+                else:
+                    st.dataframe(
+                        braking_comparison_df,
+                        hide_index=True
+                    )
+
+                    st.caption(
+                        "Positive Start Delta = Lap B brakes later | "
+                        "Positive End Delta = Lap B releases the brake later"
+                    )
 
                 throttle_comparison_fig = plot_channel_comparison(
                     telemetry_df,
